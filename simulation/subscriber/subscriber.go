@@ -11,9 +11,15 @@ var MessagePubHandler MQTT.MessageHandler = func(_ MQTT.Client, msg MQTT.Message
 	fmt.Printf("Recebido dado solar: %s do tópico: %s as %s \n", msg.Payload(), msg.Topic(), time.Now().Format(time.RFC3339))
 }
 
-func RunSub(topic string, callback MQTT.MessageHandler) {
+func RunSub(clientId string, topic string, callback MQTT.MessageHandler, end ...chan struct{}) {
+	if len(end) == 0 {
+		end = []chan struct{}{
+			make(chan struct{}),
+		}
+	}
+
 	opts := MQTT.NewClientOptions().AddBroker("tcp://localhost:1891")
-	opts.SetClientID("go_subscriber")
+	opts.SetClientID(clientId)
 	opts.SetDefaultPublishHandler(callback)
 
 	client := MQTT.NewClient(opts)
@@ -27,6 +33,9 @@ func RunSub(topic string, callback MQTT.MessageHandler) {
 	}
 
 	fmt.Println("Subscriber está rodando. Pressione CTRL+C para sair.")
-	select {}
+	select {
+	case <-end[0]:
+		close(end[0])
+		return
+	}
 }
-

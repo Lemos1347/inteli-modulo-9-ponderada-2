@@ -1,7 +1,6 @@
 package publisher
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -18,10 +17,10 @@ func randSleep() {
 }
 
 // function to publish a messagem in a given topic
-func PubMessage(topic string, csvPath string, timeOut context.Context, ch ...chan string) {
+func PubMessage(clientId string, topic string, csvPath string, end chan struct{}, ch ...chan string) {
 	// connecting to a broker
 	opts := MQTT.NewClientOptions().AddBroker("tcp://localhost:1891")
-	opts.SetClientID("go_publisher")
+	opts.SetClientID(clientId)
 
 	client := MQTT.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
@@ -31,8 +30,12 @@ func PubMessage(topic string, csvPath string, timeOut context.Context, ch ...cha
 	// loop to emit the messages
 	for {
 		select {
-		case <-timeOut.Done():
+		case <-end:
 			fmt.Println("\033[35mPublisher encerrado! \033[0m")
+			close(end)
+			if len(ch) > 0 {
+				close(ch[0])
+			}
 			return
 		default:
 			// Getting the readings of a given sensor
