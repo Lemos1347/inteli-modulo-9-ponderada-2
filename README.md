@@ -6,6 +6,8 @@ Este documento descreve os testes automatizados implementados para o simulador d
 
 ## Demonstração
 
+https://github.com/Lemos1347/inteli-modulo-9-ponderada-2/assets/99190347/832a2ae8-8961-4880-85a3-87c820f0156f
+
 ## Testes Implementados
 
 Em todos os testes eu inicio um publisher e um subscriber individualmente em goroutines separadas da principal do teste.
