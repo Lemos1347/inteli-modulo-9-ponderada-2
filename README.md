@@ -6,7 +6,7 @@ Este documento descreve os testes automatizados implementados para o simulador d
 
 ## Demonstração
 
-https://github.com/Lemos1347/inteli-modulo-9-ponderada-2/assets/99190347/832a2ae8-8961-4880-85a3-87c820f0156f
+https://github.com/Lemos1347/inteli-modulo-9-ponderada-2/assets/99190347/fc8860e5-dfc5-429b-b607-d09098dcb62d
 
 ## Testes Implementados
 
