@@ -2,6 +2,7 @@ package subscriber
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
@@ -11,7 +12,10 @@ var MessagePubHandler MQTT.MessageHandler = func(_ MQTT.Client, msg MQTT.Message
 	fmt.Printf("Recebido dado solar: %s do tópico: %s as %s \n", msg.Payload(), msg.Topic(), time.Now().Format(time.RFC3339))
 }
 
-func RunSub(clientId string, topic string, callback MQTT.MessageHandler, end ...chan struct{}) {
+func RunSub(clientId string, topic string, callback MQTT.MessageHandler, wg *sync.WaitGroup, end ...chan struct{}) {
+	wg.Add(1)
+	defer wg.Done()
+
 	if len(end) == 0 {
 		end = []chan struct{}{
 			make(chan struct{}),

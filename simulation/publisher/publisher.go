@@ -3,6 +3,7 @@ package publisher
 import (
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/Lemos1347/inteli-modulo-9-ponderada-2/simulation/publisher/sensors"
@@ -17,7 +18,9 @@ func randSleep() {
 }
 
 // function to publish a messagem in a given topic
-func PubMessage(clientId string, topic string, csvPath string, end chan struct{}, ch ...chan string) {
+func PubMessage(clientId string, topic string, csvPath string, end chan struct{}, wg *sync.WaitGroup, ch ...chan string) {
+	wg.Add(1)
+	defer wg.Done()
 	// connecting to a broker
 	opts := MQTT.NewClientOptions().AddBroker("tcp://localhost:1891")
 	opts.SetClientID(clientId)

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 // Teste para verificar se os dados estão chegando no broker
 func TestSendingMessages(t *testing.T) {
 	err := make(chan string)
+	wg := sync.WaitGroup{}
 	// defer close(err)
 
 	testTimeOut, testTimeOutCancel := context.WithTimeout(context.Background(), time.Second*20)
@@ -28,7 +30,7 @@ func TestSendingMessages(t *testing.T) {
 	endSub := make(chan struct{}, 1)
 	endPub := make(chan struct{}, 1)
 
-	go publisher.PubMessage("go_test_pub_1", "test/TestSendingMessages", "../data/dados_sensor_radiacao_solar.csv", endPub)
+	go publisher.PubMessage("go_test_pub_1", "test/TestSendingMessages", "../data/dados_sensor_radiacao_solar.csv", endPub, &wg)
 
 	testCallback := func(_ MQTT.Client, msg MQTT.Message) {
 		if string(msg.Payload()) == "" || msg.Topic() != "test/TestSendingMessages" {
@@ -38,22 +40,25 @@ func TestSendingMessages(t *testing.T) {
 		t.Log(fmt.Sprintf("Received data: %s\n", msg.Payload()))
 	}
 
-	go subscriber.RunSub("go_test_sub_1", "test/TestSendingMessages", testCallback, endSub)
+	go subscriber.RunSub("go_test_sub_1", "test/TestSendingMessages", testCallback, &wg, endSub)
 
 	select {
 	case msg := <-err:
 		endSub <- struct{}{}
 		endPub <- struct{}{}
+		wg.Wait()
 		t.Fatal(msg)
 	case <-testTimeOut.Done():
 		endSub <- struct{}{}
 		endPub <- struct{}{}
+		wg.Wait()
 		return
 	}
 }
 
 func TestMessageAcertivity(t *testing.T) {
 	err := make(chan string)
+	wg := sync.WaitGroup{}
 	// defer close(err)
 
 	testTimeOut, testTimeOutCancel := context.WithTimeout(context.Background(), time.Second*20)
@@ -64,7 +69,7 @@ func TestMessageAcertivity(t *testing.T) {
 
 	ch := make(chan string, 20)
 
-	go publisher.PubMessage("go_test_pub_2", "test/TestMessageAcertivity", "../data/dados_sensor_radiacao_solar.csv", endPub, ch)
+	go publisher.PubMessage("go_test_pub_2", "test/TestMessageAcertivity", "../data/dados_sensor_radiacao_solar.csv", endPub, &wg, ch)
 
 	testCallback := func(_ MQTT.Client, msg MQTT.Message) {
 		valueSended := <-ch
@@ -77,23 +82,26 @@ func TestMessageAcertivity(t *testing.T) {
 		t.Log(fmt.Sprintf("Received data: %s\n", msg.Payload()))
 	}
 
-	go subscriber.RunSub("go_test_sub_2", "test/TestMessageAcertivity", testCallback, endSub)
+	go subscriber.RunSub("go_test_sub_2", "test/TestMessageAcertivity", testCallback, &wg, endSub)
 
 	select {
 	case msg := <-err:
 		endSub <- struct{}{}
 		endPub <- struct{}{}
+		wg.Wait()
 		t.Fatal(msg)
 		return
 	case <-testTimeOut.Done():
 		endSub <- struct{}{}
 		endPub <- struct{}{}
+		wg.Wait()
 		return
 	}
 }
 
 func TestSendingMessagesTime(t *testing.T) {
 	start := time.Now()
+	wg := sync.WaitGroup{}
 
 	err := make(chan string)
 	// defer close(err)
@@ -104,7 +112,7 @@ func TestSendingMessagesTime(t *testing.T) {
 	endSub := make(chan struct{}, 1)
 	endPub := make(chan struct{}, 1)
 
-	go publisher.PubMessage("go_test_pub_3", "test/TestSendingMessagesTime", "../data/dados_sensor_radiacao_solar.csv", endPub)
+	go publisher.PubMessage("go_test_pub_3", "test/TestSendingMessagesTime", "../data/dados_sensor_radiacao_solar.csv", endPub, &wg)
 
 	testTimeCallback := func(_ MQTT.Client, msg MQTT.Message) {
 		waitTime := time.Since(start).Seconds()
@@ -117,17 +125,19 @@ func TestSendingMessagesTime(t *testing.T) {
 		start = time.Now()
 	}
 
-	go subscriber.RunSub("go_test_sub_3", "test/TestSendingMessagesTime", testTimeCallback, endSub)
+	go subscriber.RunSub("go_test_sub_3", "test/TestSendingMessagesTime", testTimeCallback, &wg, endSub)
 
 	select {
 	case msg := <-err:
 		endSub <- struct{}{}
 		endPub <- struct{}{}
+		wg.Wait()
 		t.Fatal(msg)
 		return
 	case <-testTimeOut.Done():
 		endSub <- struct{}{}
 		endPub <- struct{}{}
+		wg.Wait()
 		return
 	}
 
